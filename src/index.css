@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Force AG Grid into Premium Dark Mode */
+.ag-theme-alpine, .ag-theme-alpine-dark, .ag-theme-quartz, .ag-theme-quartz-dark {
+  --ag-background-color: #111 !important;
+  --ag-header-background-color: #1a1a1a !important;
+  --ag-odd-row-background-color: #111 !important;
+  --ag-foreground-color: #e2e8f0 !important;
+  --ag-header-foreground-color: #94a3b8 !important;
+  --ag-border-color: #262626 !important;
+  --ag-row-border-color: #262626 !important;
+  --ag-row-hover-color: #1e293b !important;
+  background-color: #111 !important;
+}
+
+.ag-root-wrapper {
+  border: none !important;
+}

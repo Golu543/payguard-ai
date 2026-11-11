@@ -65,7 +65,30 @@ export default function App() {
   ];
 
   const defaultColDef = useMemo(() => ({ sortable: true, filter: true, resizable: true }), []);
+// Calculate dynamic stats from table data
+  // Calculate dynamic stats from table data
+  const totalVolume = useMemo(() => {
+    const sum = rowData.reduce((acc, row) => {
+      const val = parseFloat(row.amount.replace(/[^0-9.-]+/g, "")) || 0;
+      return acc + val;
+    }, 0); // 0 se start hoga, sirf table ki real value lega
+    return sum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }, [rowData]);
 
+  const activeContractsCount = useMemo(() => {
+    return rowData.filter(row => row.status === "Secured in Escrow" || row.status === "In Dispute").length;
+  }, [rowData]);
+
+  const resolutionAccuracy = useMemo(() => {
+    const scoredRows = rowData.filter(row => row.aiScore && row.aiScore.includes('%'));
+    if (scoredRows.length === 0) return "100%";
+    const totalScore = scoredRows.reduce((acc, row) => {
+      const match = row.aiScore.match(/(\d+)%/);
+      return acc + (match ? parseInt(match[1]) : 95);
+    }, 0);
+    return (totalScore / scoredRows.length).toFixed(1) + "%";
+  }, [rowData]);
+  
   const handleVoiceInput = () => {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
@@ -110,7 +133,7 @@ export default function App() {
     }, 600);
   };
 
-  const handleSendMessage = (e) => {
+ const handleSendMessage = (e) => {
     e.preventDefault();
     if (!chatInput.trim()) return;
     
@@ -119,6 +142,14 @@ export default function App() {
     setChatInput('');
 
     const lowerText = userText.toLowerCase();
+
+    // Check if user is denying or reporting an issue
+    const isNegative = lowerText.includes('not') || 
+                       lowerText.includes('incomplete') || 
+                       lowerText.includes('bad') || 
+                       lowerText.includes('bug') || 
+                       lowerText.includes('fail') || 
+                       lowerText.includes('issue');
 
     if (lowerText.includes('hire') || lowerText.includes('build') || lowerText.includes('$') || lowerText.includes('dollar')) {
       const match = userText.match(/\$?(\d+)\s*(dollars?)?/i);
@@ -136,18 +167,21 @@ export default function App() {
         setChatHistory(prev => [...prev, { role: 'agent', text: `I have drafted an Autonomous Smart Contract. Escrow value: $${amt}.00. Funds will remain locked with PayPal until verified by my AI engine. Authorize payment below.` }]);
       });
     } 
-    else if (lowerText.includes('incomplete') || lowerText.includes('bad') || lowerText.includes('bug')) {
+    else if (isNegative) {
+      // Runs whenever "not", "incomplete", or issue words are present
       simulateLogs([
         "> [GitHub Auditor] Fetching latest commit...",
         "> [AST Scanner] Analyzing code structure...",
-        "> [Security] WARNING: Missing form validation found.",
+        "> [Security] WARNING: Milestone rejected or code incomplete.",
         "> [AI Verdict] Score: 45%. Requirements NOT met.",
         "> [Escrow Engine] Halting payout. Locking funds."
       ], () => {
         setRowData(prev => prev.map(row => row.status === "Secured in Escrow" ? { ...row, status: "In Dispute", aiScore: "45% Match" } : row));
-        setChatHistory(prev => [...prev, { role: 'agent', text: "❌ Code Analysis Failed: 45% Match. Missing core features and security checks. Funds are held securely in Dispute. Developer has 48 hours to revise the code." }]);
+        setChatHistory(prev => [...prev, { role: 'agent', text: "❌ Code Analysis Failed: 45% Match. Requirements not met or reported incomplete. Funds held securely in Dispute. Developer notified." }]);
       });
-    } else if (lowerText.includes('deliver') || lowerText.includes('upload') || lowerText.includes('code') || lowerText.includes('finish') || lowerText.includes('completed') || lowerText.includes('done') || lowerText.includes('task')) {
+    } 
+    else if (lowerText.includes('deliver') || lowerText.includes('upload') || lowerText.includes('code') || lowerText.includes('finish') || lowerText.includes('completed') || lowerText.includes('done') || lowerText.includes('task')) {
+      // Runs only when completed without any negative words
       simulateLogs([
         "> [GitHub Auditor] Fetching repository branch 'main'...",
         "> [Requirements Check] React UI: PASS | Auth: PASS",
@@ -256,21 +290,21 @@ Date: ${new Date().toLocaleString()}
                 <div className="bg-[#111] border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
                   <div>
                     <p className="text-slate-500 text-xs font-semibold mb-1">Total Escrow Volume</p>
-                    <h3 className="text-2xl font-bold text-white">$14,250.00</h3>
+                    <h3 className="text-2xl font-bold text-white">${totalVolume}</h3>
                   </div>
                   <div className="w-12 h-12 bg-indigo-500/10 border border-indigo-500/20 rounded-full flex items-center justify-center text-indigo-400"><TrendingUp size={22}/></div>
                 </div>
                 <div className="bg-[#111] border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
                   <div>
                     <p className="text-slate-500 text-xs font-semibold mb-1">Active AI Contracts</p>
-                    <h3 className="text-2xl font-bold text-white">4 Active</h3>
+                    <h3 className="text-2xl font-bold text-white">{activeContractsCount} Active</h3>
                   </div>
                   <div className="w-12 h-12 bg-emerald-500/10 border border-emerald-500/20 rounded-full flex items-center justify-center text-emerald-400"><CheckCircle size={22}/></div>
                 </div>
                 <div className="bg-[#111] border border-slate-800 p-5 rounded-2xl flex items-center justify-between shadow-sm">
                   <div>
                     <p className="text-slate-500 text-xs font-semibold mb-1">AI Resolution Accuracy</p>
-                    <h3 className="text-2xl font-bold text-white">99.2%</h3>
+                    <h3 className="text-2xl font-bold text-white">{resolutionAccuracy}</h3>
                   </div>
                   <div className="w-12 h-12 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center text-amber-400"><BrainCircuit size={22}/></div>
                 </div>

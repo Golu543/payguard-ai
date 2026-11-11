@@ -25,16 +25,19 @@ PayGuard AI is an autonomous, agent-driven escrow system designed to bridge the 
 - **Data Grid:** AG Grid Community (Dark Quartz Engine)
 - **Payments:** PayPal JavaScript SDK (`@paypal/react-paypal-js`)
 - **Agent Intelligence:** Web Speech API, Native Intent Regex Engine, Async Chain-of-Thought State Machine
+- **Backend:** Node.js, Express.js
 
 ---
 
 ## 🚀 Getting Started
 
-### 1. Installation & Setup
+### 1. Prerequisites
+- Node.js (v18+ recommended)
+- Git
+
+### 2. Installation & Setup
 
 Clone the repository:
 ```bash
-git clone [https://github.com/Golu543/payguard-ai.git](https://github.com/Golu543/payguard-ai.git)
+git clone [https://github.com/](https://github.com/)<YOUR_GITHUB_USERNAME>/payguard-ai.git
 cd payguard-ai
-npm install
-npm run dev
